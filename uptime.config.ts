@@ -1,4 +1,7 @@
-const pageConfig = {
+import { PageConfig, WorkerConfig, CallbacksConfig, NotificationConfig, AppriseNotification, WebhookNotification } from './uptime.types';
+
+// Page Configuration
+const pageConfig: PageConfig = {
   // Title for your status page
   title: "lyc8503's Status Page",
   // Links shown at the header of your status page, could set `highlight` to `true`
@@ -14,9 +17,36 @@ const pageConfig = {
     "🌐 Public (example group name)": ['foo_monitor', 'bar_monitor', 'more monitor ids...'],
     "🔐 Private": ['test_tcp_monitor'],
   },
-}
+};
 
-const workerConfig = {
+// Notification Configurations
+const notifications: NotificationConfig[] = [
+  // Example Apprise notification
+  {
+    id: 'default_apprise',
+    type: 'apprise',
+    appriseApiServer: "https://apprise.example.com/notify",
+    recipientUrl: "tgram://bottoken/ChatID",
+    timeZone: "Asia/Shanghai",
+    gracePeriod: 5,
+  },
+  // Example Webhook notification
+  {
+    id: 'default_webhook',
+    type: 'webhook',
+    url: 'https://webhook.example.com/endpoint',
+    headers: {
+      'Authorization': 'Bearer YOUR_WEBHOOK_TOKEN',
+      'Content-Type': 'application/json'
+    },
+    method: 'POST',
+    timeZone: "Etc/GMT",
+    gracePeriod: 3,
+  },
+];
+
+// Worker Configuration
+const workerConfig: WorkerConfig = {
   // Write KV at most every 3 minutes unless the status changed
   kvWriteCooldownMinutes: 3,
   // Enable HTTP Basic auth for status page & API by uncommenting the line below, format `<USERNAME>:<PASSWORD>`
@@ -57,6 +87,9 @@ const workerConfig = {
       // [OPTIONAL] if specified, the check will run in your specified region,
       // refer to docs https://github.com/lyc8503/UptimeFlare/wiki/Geo-specific-checks-setup before setting this value
       checkLocationWorkerRoute: 'https://xxx.example.com',
+      // [OPTIONAL] Specify which notification configurations to use for this monitor
+      // If not specified, all notifications will be used
+      notifications: ['default_apprise'],
     },
     // Example TCP Monitor
     {
@@ -69,51 +102,39 @@ const workerConfig = {
       tooltip: 'My production server SSH',
       statusPageLink: 'https://example.com',
       timeout: 5000,
+      // [OPTIONAL] Use multiple notification configurations for this monitor
+      notifications: ['default_apprise', 'default_webhook'],
     },
   ],
-  notification: {
-    // [Optional] apprise API server URL
-    // if not specified, no notification will be sent
-    appriseApiServer: "https://apprise.example.com/notify",
-    // [Optional] recipient URL for apprise, refer to https://github.com/caronc/apprise
-    // if not specified, no notification will be sent
-    recipientUrl: "tgram://bottoken/ChatID",
-    // [Optional] timezone used in notification messages, default to "Etc/GMT"
-    timeZone: "Asia/Shanghai",
-    // [Optional] grace period in minutes before sending a notification
-    // notification will be sent only if the monitor is down for N continuous checks after the initial failure
-    // if not specified, notification will be sent immediately
-    gracePeriod: 5,
-    // [Optional] disable notification for monitors with specified ids
-    skipNotificationIds: ['foo_monitor', 'bar_monitor'],
-  },
-  callbacks: {
-    onStatusChange: async (
-      env: any,
-      monitor: any,
-      isUp: boolean,
-      timeIncidentStart: number,
-      timeNow: number,
-      reason: string
-    ) => {
-      // This callback will be called when there's a status change for any monitor
-      // Write any Typescript code here
+};
 
-      // This will not follow the grace period settings and will be called immediately when the status changes
-      // You need to handle the grace period manually if you want to implement it
-    },
-    onIncident: async (
-      env: any,
-      monitor: any,
-      timeIncidentStart: number,
-      timeNow: number,
-      reason: string
-    ) => {
-      // This callback will be called EVERY 1 MINTUE if there's an on-going incident for any monitor
-      // Write any Typescript code here
-    },
+// Callbacks Configuration
+const callbacks: CallbacksConfig = {
+  onStatusChange: async (
+    env: any,
+    monitor: any,
+    isUp: boolean,
+    timeIncidentStart: number,
+    timeNow: number,
+    reason: string
+  ) => {
+    // This callback will be called when there's a status change for any monitor
+    // Write any Typescript code here
+
+    // This will not follow the grace period settings and will be called immediately when the status changes
+    // You need to handle the grace period manually if you want to implement it
   },
-}
+  onIncident: async (
+    env: any,
+    monitor: any,
+    timeIncidentStart: number,
+    timeNow: number,
+    reason: string
+  ) => {
+    // This callback will be called EVERY 1 MINTUE if there's an on-going incident for any monitor
+    // Write any Typescript code here
+  },
+};
 
 // Don't forget this, otherwise compilation fails.
-export { pageConfig, workerConfig }
+export { pageConfig, workerConfig, notifications, callbacks }
